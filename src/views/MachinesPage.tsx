@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { getMachines, updateMachineStatus, getSedes, createMachine } from '../services/api'; 
-import { Dumbbell, Wrench, Zap, ArrowLeft, MapPin, AlertCircle, Plus, X } from 'lucide-react';
+import { Dumbbell, Wrench, ArrowLeft, MapPin, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 // 🚀 CONFIGURACIÓN DE SERIALES SIMPLES (C-M-X)

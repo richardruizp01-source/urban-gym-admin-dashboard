@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { 
-  Plus, Building2, MapPin, Phone, 
-  Activity, X, Zap, Power, Globe 
+  Plus, Building2, MapPin,
+  Activity, X, Power
 } from 'lucide-react';
 import { getSedes, createSede, updateSedeStatus } from '../services/api'; 
 import { toast } from 'sonner';

@@ -30,7 +30,7 @@ const ReservasPage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null); // 👈 NUEVO: estado de confirmación
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const [nuevaClase, setNuevaClase] = useState({
     nombre_clase: '', 
@@ -41,7 +41,8 @@ const ReservasPage = () => {
     fecha_inicio: '',
     fecha_fin: '',
     socio_id: '77f72671-654a-4f9e-8c85-6932470768f5', 
-    estado: 'CONFIRMED'
+    estado: 'CONFIRMED',
+    descripcion: '', // 👈 NUEVO
   });
 
   const cargarDatos = async () => {
@@ -60,7 +61,7 @@ const ReservasPage = () => {
       setSesiones(Array.isArray(dataBookings) ? dataBookings : []);
       setEntrenadores(Array.isArray(dataTrainers) ? dataTrainers : []);
       const todasSedes = Array.isArray(dataSedes) ? dataSedes : Array.isArray(dataSedes?.data) ? dataSedes.data : [];
-setSedes(todasSedes.filter((s: any) => s.esta_activa));
+      setSedes(todasSedes.filter((s: any) => s.esta_activa));
     } catch (err) {
       console.error("🚨 Fallo de enlace táctico:", err);
     } finally {
@@ -70,17 +71,13 @@ setSedes(todasSedes.filter((s: any) => s.esta_activa));
 
   useEffect(() => { cargarDatos(); }, []);
 
-  // ✅ Sin confirm() — usa confirmingId para pedir confirmación inline
   const handleEliminar = async (id: string) => {
-    // Primer click: pedir confirmación
     if (confirmingId !== id) {
       setConfirmingId(id);
-      // Auto-cancelar después de 3 segundos si no confirma
       setTimeout(() => setConfirmingId(null), 3000);
       return;
     }
 
-    // Segundo click: ejecutar DELETE
     setConfirmingId(null);
     setDeletingId(id);
     try {
@@ -119,6 +116,7 @@ setSedes(todasSedes.filter((s: any) => s.esta_activa));
           capacidad_total: nuevaClase.cupos_maximos,
           fecha_inicio: nuevaClase.fecha_inicio + ':00-05:00',
           fecha_fin: nuevaClase.fecha_fin + ':00-05:00',
+          descripcion: nuevaClase.descripcion, // 👈 NUEVO
         })
       });
 
@@ -192,7 +190,6 @@ setSedes(todasSedes.filter((s: any) => s.esta_activa));
             return (
               <div key={sesion.id} className="group relative bg-zinc-900/20 border border-zinc-800/50 rounded-[2.5rem] p-8 hover:border-orange-500/40 transition-all backdrop-blur-xl">
                 
-                {/* ✅ Botón con confirmación de doble click — sin confirm() */}
                 <button
                   onClick={() => handleEliminar(sesion.id)}
                   disabled={isDeleting}
@@ -296,6 +293,17 @@ setSedes(todasSedes.filter((s: any) => s.esta_activa));
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs font-bold text-white focus:border-orange-500 outline-none" 
                   placeholder="Ej: Zumba, Boxeo..." 
                   onChange={(e) => setNuevaClase(prev => ({...prev, nombre_clase: e.target.value}))}
+                />
+              </div>
+
+              {/* 👈 NUEVO: Campo descripcion */}
+              <div>
+                <label className="block text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 text-white">Descripción</label>
+                <textarea
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs font-bold text-white focus:border-orange-500 outline-none resize-none"
+                  placeholder="Ej: Clase de alta intensidad para todos los niveles..."
+                  rows={3}
+                  onChange={(e) => setNuevaClase(prev => ({...prev, descripcion: e.target.value}))}
                 />
               </div>
 

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
-import { UserMinus, UserPlus, Zap, Loader2, X, Crown, Shield } from 'lucide-react'; 
-import { getEmployees, deleteMember, createMember } from '../services/api';
+import { UserMinus, UserPlus, Zap, Loader2, X, Crown, Shield, MapPin } from 'lucide-react'; 
+import { getEmployees, deleteMember, createMember, getSedes } from '../services/api';
 import { toast } from 'sonner';
 
 export const EmployeesPage = () => {
   const [employees, setEmployees] = useState<any[]>([]);
+  const [sedes, setSedes] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ 
@@ -13,22 +14,48 @@ export const EmployeesPage = () => {
     role: 'TRAINER', 
     email: '', 
     telefono: '',
-    password: ''
+    password: '',
+    sede_id: '' 
   });
 
-  const fetchStaff = async () => {
+const fetchStaff = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token') || undefined;
+      
+      // 1. Obtener Empleados
       const data = await getEmployees(token);
       setEmployees(data);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      
+      // 2. Obtener Sedes
+      const response = await getSedes();
+      const listaSedes = response?.data?.data || response?.data || response || [];
+
+      if (Array.isArray(listaSedes)) {
+        // FILTRO POR BOOLEANO (esta_activa)
+        // Según tu Prisma, las sedes activas tienen esta_activa = true
+        const filtradas = listaSedes.filter((s: any) => s.esta_activa === true);
+
+        console.log("✅ Sedes filtradas por Booleano:", filtradas);
+        setSedes(filtradas);
+      }
+
+    } catch (err) { 
+      console.error("Error cargando sedes:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   useEffect(() => { fetchStaff(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.sede_id) {
+      return toast.error("¡DEBES SELECCIONAR UNA SEDE PARA EL GUERRERO!");
+    }
+
     try {
       const token = localStorage.getItem('token') || undefined;
       await createMember({
@@ -37,13 +64,16 @@ export const EmployeesPage = () => {
         rol: formData.role,
         telefono: formData.telefono,
         password: formData.password || '123456',
+        sede_id: formData.sede_id, 
       }, token);
+
       toast.success(`GUERRERO ${formData.nombre.toUpperCase()} SINCRONIZADO`, {
         icon: <Zap className="text-yellow-400" fill="currentColor" />,
         style: { background: '#000', color: '#fff', border: '1px solid #7c3aed' }
       });
+
       setIsModalOpen(false);
-      setFormData({ nombre: '', role: 'TRAINER', email: '', telefono: '', password: '' });
+      setFormData({ nombre: '', role: 'TRAINER', email: '', telefono: '', password: '', sede_id: '' });
       fetchStaff();
     } catch (err: any) {
       toast.error(`Error: ${err.message}`);
@@ -86,7 +116,6 @@ export const EmployeesPage = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Nombre */}
                   <div className="relative">
                     <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Alias del Miembro</label>
                     <input 
@@ -97,7 +126,6 @@ export const EmployeesPage = () => {
                     />
                   </div>
 
-                  {/* Email */}
                   <div className="relative">
                     <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Correo Electrónico</label>
                     <input 
@@ -108,7 +136,27 @@ export const EmployeesPage = () => {
                     />
                   </div>
 
-                  {/* Password */}
+                  {/* SELECTOR DE SEDE MEJORADO */}
+                  <div className="relative">
+                    <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Sede de Operaciones</label>
+                    <div className="relative">
+                      <select 
+                        required
+                        className="w-full bg-white/5 border-2 border-white/10 rounded-2xl p-5 text-white focus:border-purple-500 outline-none font-bold appearance-none italic transition-all"
+                        value={formData.sede_id}
+                        onChange={(e) => setFormData({...formData, sede_id: e.target.value})}
+                      >
+                        <option value="" className="bg-[#0d0d11]">SELECCIONAR SEDE ACTIVA</option>
+                        {sedes.map((sede) => (
+                          <option key={sede.id} value={sede.id} className="bg-[#0d0d11]">
+                            📍 {sede.nombre.toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                      <MapPin size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-purple-500/50 pointer-events-none" />
+                    </div>
+                  </div>
+
                   <div className="relative">
                     <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Contraseña</label>
                     <input 
@@ -120,7 +168,6 @@ export const EmployeesPage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Rol */}
                     <div className="relative">
                       <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Rango Especializado</label>
                       <select 
@@ -128,12 +175,11 @@ export const EmployeesPage = () => {
                         value={formData.role}
                         onChange={(e) => setFormData({...formData, role: e.target.value})}
                       >
-                        <option value="TRAINER">⚡ TRAINER</option>
-                        <option value="RECEPCION">🛡️ RECEPCIÓN</option>
-                        <option value="ADMIN">👑 DIRECTOR</option>
+                        <option value="TRAINER" className="bg-[#0d0d11]">⚡ TRAINER</option>
+                        <option value="RECEPCION" className="bg-[#0d0d11]">🛡️ RECEPCIÓN</option>
+                        <option value="ADMIN" className="bg-[#0d0d11]">👑 DIRECTOR</option>
                       </select>
                     </div>
-                    {/* Teléfono */}
                     <div className="relative">
                       <label className="absolute -top-2 left-4 px-2 bg-[#0d0d11] text-[9px] font-black text-purple-400 uppercase tracking-widest z-10">Línea de Enlace</label>
                       <input 
@@ -160,15 +206,15 @@ export const EmployeesPage = () => {
           </div>
         )}
 
-        {/* --- HEADER ÉLITE --- */}
+        {/* --- HEADER --- */}
         <div className="flex justify-between items-center bg-gray-900/40 p-10 rounded-[40px] border border-white/5 backdrop-blur-md shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-20 transition-opacity">
-             <Zap size={140} className="text-purple-500 rotate-12 fill-purple-500/10" />
+              <Zap size={140} className="text-purple-500 rotate-12 fill-purple-500/10" />
           </div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
-               <Crown size={16} className="text-yellow-400 fill-yellow-400" />
-               <span className="text-purple-400 text-[10px] font-black uppercase tracking-[0.5em]">Urban Gym Elite</span>
+                <Crown size={16} className="text-yellow-400 fill-yellow-400" />
+                <span className="text-purple-400 text-[10px] font-black uppercase tracking-[0.5em]">Urban Gym Elite</span>
             </div>
             <h2 className="text-6xl font-black text-white italic uppercase tracking-tighter leading-none">
                 La <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500">Tropa</span>
@@ -176,14 +222,14 @@ export const EmployeesPage = () => {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest px-6 py-4 rounded-2xl transition-all hover:scale-105"
+            className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest px-6 py-4 rounded-2xl transition-all hover:scale-105 shadow-[0_0_30px_rgba(147,51,234,0.3)]"
           >
             <UserPlus size={20} />
             Nuevo
           </button>
         </div>
 
-        {/* --- GRID DE STAFF --- */}
+        {/* --- GRID --- */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40 gap-6">
             <div className="relative">
@@ -214,7 +260,6 @@ export const EmployeesPage = () => {
               </div>
             ))}
 
-            {/* BOTÓN AGREGAR */}
             <button 
               onClick={() => setIsModalOpen(true)}
               className="relative h-[120px] rounded-[35px] border-2 border-dashed border-white/10 flex items-center justify-center gap-4 group overflow-hidden transition-all hover:border-purple-500/50"
