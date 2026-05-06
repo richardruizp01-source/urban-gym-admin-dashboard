@@ -1,5 +1,5 @@
 // API base URL - Unificada para que todo use el mismo origen
-const API_BASE_URL = 'http://localhost:3005/api'; 
+const API_BASE_URL = 'https://urban-gym-admin-api.onrender.com/api'; 
 
 export interface DashboardData {
   resumen: {
