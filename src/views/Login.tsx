@@ -13,7 +13,9 @@ export const Login = () => {
     setIsAuthenticating(true);
 
     try {
-      const response = await fetch('http://localhost:3005/api/admin/login', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+
+      const response = await fetch(`${API_URL}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

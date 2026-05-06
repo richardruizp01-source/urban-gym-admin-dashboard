@@ -1,5 +1,5 @@
 // API base URL - Unificada para que todo use el mismo origen
-const API_BASE_URL = 'https://urban-gym-admin-api.onrender.com/api'; 
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3005'}/api`;
 
 export interface DashboardData {
   resumen: {
