@@ -1,5 +1,7 @@
 // API base URL - Unificada para que todo use el mismo origen
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3005'}/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api` 
+  : 'http://localhost:3005/api';
 
 export interface DashboardData {
   resumen: {
@@ -267,15 +269,14 @@ export const deleteMachine = async (id: string, token?: string) => {
 };
 
 /**
- * OBTENER SEDES (Centros de Poder) - Directo al 3002
+ * OBTENER SEDES (Centros de Poder) - Ahora pasa por el admin-api en producción
  */
 export const getSedes = async (token?: string) => {
   try {
     const rawToken = token || localStorage.getItem('token');
     const cleanToken = rawToken ? rawToken.replace(/['"]+/g, '') : '';
 
-    // 🚀 CAMBIO: Apuntamos al puerto real del microservicio
-    const response = await fetch('http://localhost:3002/api/facilities/sedes', {
+    const response = await fetch(`${API_BASE_URL}/admin/sedes`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -295,14 +296,13 @@ export const getSedes = async (token?: string) => {
 };
 
 /**
- * CREAR NUEVA SEDE - Directo al 3002
+ * CREAR NUEVA SEDE - Ahora pasa por el admin-api en producción
  */
 export const createSede = async (sedeData: any, token?: string) => {
   const rawToken = token || localStorage.getItem('token');
   const cleanToken = rawToken ? rawToken.replace(/['"]+/g, '') : '';
 
-  // 🚀 CAMBIO: Apuntamos al puerto real del microservicio
-  const response = await fetch('http://localhost:3002/api/facilities/sedes', {
+  const response = await fetch(`${API_BASE_URL}/admin/sedes`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -318,14 +318,14 @@ export const createSede = async (sedeData: any, token?: string) => {
   return await response.json();
 };
 /**
- * ACTUALIZAR ESTADO DE SEDE (ON/OFF) - Directo al 3002
+ * ACTUALIZAR ESTADO DE SEDE (ON/OFF) - Ahora pasa por el admin-api en producción
  */
 export const updateSedeStatus = async (sedeId: string, estaActiva: boolean, token?: string) => {
   try {
     const rawToken = token || localStorage.getItem('token');
     const cleanToken = rawToken ? rawToken.replace(/['"]+/g, '') : '';
 
-    const response = await fetch(`http://localhost:3002/api/facilities/sedes/${sedeId}/status`, {
+    const response = await fetch(`${API_BASE_URL}/admin/sedes/${sedeId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -335,11 +335,7 @@ export const updateSedeStatus = async (sedeId: string, estaActiva: boolean, toke
       body: JSON.stringify({ esta_activa: estaActiva }), 
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al actualizar estado');
-    }
-
+    if (!response.ok) return false;
     return true;
   } catch (error) {
     console.error('Error en updateSedeStatus:', error);
