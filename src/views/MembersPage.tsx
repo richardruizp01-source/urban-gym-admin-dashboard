@@ -111,7 +111,7 @@ export const MembersPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await fetch(`http://localhost:3001/api/v1/members/${id}/reset-password`, {
+      const res = await fetch(`https://urban-gym-admin-api.onrender.com/api/admin/members/${id}/reset-password`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
