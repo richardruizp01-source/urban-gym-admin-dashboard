@@ -48,20 +48,24 @@ const ReservasPage = () => {
   const cargarDatos = async () => {
     try {
       console.log("🛰️ Sincronizando microservicios...");
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const apiUrl = import.meta.env.VITE_API_URL;
+
       const [resBookings, resTrainers, resSedes] = await Promise.all([
-        fetch('http://localhost:3003/api/v1/bookings/instancias'),
-        fetch('http://localhost:3001/api/v1/members/trainers'),
-        fetch('http://localhost:3002/api/facilities/sedes')
+        fetch(`${apiUrl}/api/admin/reservas`, { headers }),
+        fetch(`${apiUrl}/api/admin/staff/trainers`, { headers }),
+        fetch(`${apiUrl}/api/admin/sedes`, { headers })
       ]);
       
       const dataBookings = await resBookings.json();
       const dataTrainers = await resTrainers.json();
       const dataSedes = await resSedes.json();
       
-      setSesiones(Array.isArray(dataBookings) ? dataBookings : []);
-      setEntrenadores(Array.isArray(dataTrainers) ? dataTrainers : []);
-      const todasSedes = Array.isArray(dataSedes) ? dataSedes : Array.isArray(dataSedes?.data) ? dataSedes.data : [];
-      setSedes(todasSedes.filter((s: any) => s.esta_activa));
+      setSesiones(Array.isArray(dataBookings) ? dataBookings : dataBookings?.data || []);
+      setEntrenadores(Array.isArray(dataTrainers) ? dataTrainers : dataTrainers?.data || []);
+      const todasSedes = dataSedes?.data || dataSedes || [];
+      setSedes(Array.isArray(todasSedes) ? todasSedes.filter((s: any) => s.esta_activa) : []);
     } catch (err) {
       console.error("🚨 Fallo de enlace táctico:", err);
     } finally {
@@ -81,8 +85,9 @@ const ReservasPage = () => {
     setConfirmingId(null);
     setDeletingId(id);
     try {
-      const res = await fetch(`http://localhost:3003/api/v1/bookings/instancias/${id}`, {
-        method: 'DELETE'
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/reservas/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
         setSesiones(prev => prev.filter(s => s.id !== id));
@@ -103,9 +108,12 @@ const ReservasPage = () => {
     try {
       const coach = entrenadores.find(t => t.id === nuevaClase.entrenador_id);
 
-      const response = await fetch('http://localhost:3003/api/v1/bookings/instancias', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/reservas`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           clase_id: nuevaClase.clase_instancia_id,
           nombre_clase: nuevaClase.nombre_clase,
