@@ -88,7 +88,7 @@ export const updateMemberStatus = async (id: string, estado: string, token?: str
   throw new Error("Sesión inválida");
 }
 
-  const response = await fetch(`http://localhost:3001/api/v1/members/${id}/status`, {
+  const response = await fetch(`https://urban-gym-production.up.railway.app/api/v1/members/${id}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
